@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conference Management System</title>
+    <style>
+        body, h1, h2, label, input, button, ul {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            margin: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: #007bff;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        section {
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+
+        section h2 {
+            margin-bottom: 20px;
+            color: #007bff;
+            text-align: center;
+        }
+
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+ 
+        label {
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+
+        input[type="text"], input[type="number"], input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+ 
+        button {
+            padding: 10px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        ul li {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        ul li:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Conference Management System</h1>
+    </header>
+    <main>
+        <section id="available-conferences">
+            <h2>Available Conferences</h2>
+            <button id="load-conferences">Booking Status</button>
+            <ul id="conference-list"></ul>
+        </section>
+        <section id="create-conference">
+            <h2>Create a Conference</h2>
+            <form id="conference-form">
+                <label for="name">User Name:</label>
+                <input type="text" id="name" name="name" required>
+
+                <label for="user_id">User ID:</label>
+                <input type="number" id="user_id" name="user_id" required>
+
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" required>
+
+                <label for="location">Location:</label>
+                <input type="text" id="location" name="location" pattern="[a-zA-Z0-9\s]+" required title="Only alphanumeric characters and spaces are allowed.">
+
+                <button type="submit" id="confirm-booking">Confirm Booking</button>
+                <button type="button" id="cancel-booking">Cancel Booking</button>
+            </form>
+        </section>
+    </main>
+    <script>
+        document.getElementById('load-conferences').addEventListener('click', function() {
+            fetch('/api/conferences')
+                .then(response => response.json())
+                .then(data => {
+                    const list = document.getElementById('conference-list');
+                    list.innerHTML = data.map(conf => `<li>${conf.name} - ${conf.date}</li>`).join('');
+                })
+                .catch(error => console.error('Error fetching conferences:', error));
+        });
+
+        document.getElementById('conference-form').addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent default form submission
+
+            const name = document.getElementById('name').value;
+            const date = document.getElementById('date').value;
+            const user_id = document.getElementById('user_id').value;
+            const location = document.getElementById('location').value;
+
+            fetch('/api/conferences', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, date, user_id, location })
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Failed to create conference');
+                }
+            })
+            .then(data => {
+                alert('Conference created!');
+                document.getElementById('conference-form').reset(); // Reset the form
+            })
+            .catch(error => console.error('Error creating conference:', error));
+        });
+
+        document.getElementById('cancel-booking').addEventListener('click', function() {
+            const bookingId = prompt('Enter Booking ID to cancel:');
+            if (bookingId) {
+                fetch('/api/bookings/cancel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bookingId })
+                })
+                .then(response => response.json())
+                .then(data => alert(data.message))
+                .catch(error => console.error('Error canceling booking:', error));
+            }
+        });
+    </script>
+</body>
+</html>
